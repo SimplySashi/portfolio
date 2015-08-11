@@ -1,412 +1,120 @@
+/*
+ * Generated on 2015-08-11
+ * generator-assemble v0.5.0
+ * https://github.com/assemble/generator-assemble
+ *
+ * Copyright (c) 2015 Hariadi Hinta
+ * Licensed under the MIT license.
+ */
+
 'use strict';
 
-module.exports = function (grunt) {
+// # Globbing
+// for performance reasons we're only matching one level down:
+// '<%= config.src %>/templates/pages/{,*/}*.hbs'
+// use this if you want to match all subfolders:
+// '<%= config.src %>/templates/pages/**/*.hbs'
 
-  //////////////////////////////
-  // Import Grunt Configuration
-  //
-  // Combine with System options
-  //////////////////////////////
-  var deepmerge = require('deepmerge');
-  var userConfig = grunt.file.readJSON('config.json');
-  userConfig = deepmerge(userConfig, grunt.file.readJSON('.system.json'));
+module.exports = function(grunt) {
 
-  // Asset Paths
-  var imagesDir = userConfig.assets.imagesDir;
-  var cssDir = userConfig.assets.cssDir;
-  var sassDir = userConfig.assets.sassDir;
-  var jsDir = userConfig.assets.jsDir;
-  var fontsDir = userConfig.assets.fontsDir;
-  var componentsDir = userConfig.assets.componentsDir;
+  require('time-grunt')(grunt);
+  require('load-grunt-tasks')(grunt);
 
-  // Generator Configuration
-  var pagesDir = userConfig.generator.pagesDir;
-  var templatesDir = userConfig.generator.templatesDir;
-  var partialsDir = userConfig.generator.partialsDir;
-
-  var helpers = userConfig.generator.helpers;
-  helpers = require('./' + helpers);
-
-  // Server Configuration
-  var port = userConfig.server.port;
-  var lrport = userConfig.server.port + 1;
-  var root = userConfig.server.root;
-
-  // Compass Configuration
-  var debugInfo = userConfig.compass.debugInfo;
-  var extensions = userConfig.compass.extensions;
-
-  // Export Configuration
-  var distPath = userConfig.export.distPath;
-  var exportPath = userConfig.export.path;
-  var assetPrefix = userConfig.export.assetPrefix;
-
-  // Github Configuration
-  var gh_commit = userConfig.git.defaultCommit;
-  var gh_upstream = userConfig.git.deployUpstream;
-  var gh_deploy = userConfig.git.deployBranch;
-  
-  //////////////////////////////
-  //Grunt Config
-  //////////////////////////////
+  // Project configuration.
   grunt.initConfig({
-    // Development Server
-    connect: {
-      server: {
-        options: {
-          port: port,
-          base: root
-        }
-      }
+
+    config: {
+      src: 'src',
+      dist: 'dist'
     },
 
-    // Watch Task
     watch: {
-      options: {
-        livereload: lrport
+      assemble: {
+        files: ['<%= config.src %>/{content,data,templates}/{,*/}*.{md,hbs,yml}'],
+        tasks: ['assemble']
       },
-      html: {
+      livereload: {
+        options: {
+          livereload: '<%= connect.options.livereload %>'
+        },
         files: [
-          pagesDir + '/{,**/}*.html',
-          pagesDir + '/{,**/}*.md',
-          templatesDir + '/{,**/}*.html'
-        ],
-        tasks: ['generator:dev']
-      },
-      js: {
-        files: [
-          jsDir + '/{,**/}*.js',
-          '!' + jsDir + '/{,**/}*.min.js'
-        ],
-        tasks: ['jshint', 'uglify:dev']
-      },
-      images: {
-        files: [imagesDir + '/**/*'],
-        tasks: ['copy:dev']
-      },
-      fonts: {
-        files: [fontsDir + '/**/*'],
-        tasks: ['copy:dev']
-      },
-      sass: {
-        files: [sassDir + '/{,**/}*.scss'],
-        tasks: ['compass:dev'],
-        options: {
-          livereload: false
-        }
-      },
-      css: {
-        files: [root + '/' + cssDir + '/{,**/}*.css'],
-        tasks: ['csslint']
+          '<%= config.dist %>/{,*/}*.html',
+          '<%= config.dist %>/assets/{,*/}*.css',
+          '<%= config.dist %>/assets/{,*/}*.js',
+          '<%= config.dist %>/assets/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
+        ]
       }
     },
 
-    // Generator Task
-    generator: {
-      dev: {
-        files: [{
-          cwd: pagesDir,
-          src: ['**/*'],
-          dest: root,
-          ext: '.html'
-        }],
-        options: {
-          partialsGlob: partialsDir + '/*.html',
-          templates: templatesDir,
-          handlebarsHelpers: helpers,
-          userConfig: userConfig,
-          environment: 'dev',
-          development: true,
-          lrport: lrport,
-          assets: ''
-        }
-      },
-      dist: {
-        files: [{
-          cwd: pagesDir,
-          src: ['**/*'],
-          dest: distPath,
-          ext: '.html'
-        }],
-        options: {
-          partialsGlob: partialsDir + '/*.html',
-          templates: templatesDir,
-          handlebarsHelpers: helpers,
-          userConfig: userConfig,
-          environment: 'prod',
-          development: false,
-          assets: '/' + assetPrefix
-
-        }
-      }
-    },
-
-    // Compass Task
-    compass: {
+    connect: {
       options: {
-        sassDir: sassDir,
-        require: extensions,
-        relativeAssets: true,
-        importPath: componentsDir,
-        debugInfo: debugInfo,
-        bundleExec: true
+        port: 8080,
+        livereload: 35829,
+        // change this to '0.0.0.0' to access the server from outside
+        hostname: 'localhost'
       },
-      dev: {
+      livereload: {
         options: {
-          imagesDir: root + '/' + imagesDir,
-          cssDir: root + '/' + cssDir,
-          javascriptsDir: root + '/' + jsDir,
-          fontsDir: root + '/' + fontsDir,
-          environment: 'development'
-        }
-      },
-      dist: {
-        options: {
-          imagesDir: distPath + '/' + imagesDir,
-          cssDir: distPath + '/' + cssDir,
-          javascriptsDir: distPath + '/' + jsDir,
-          fontsDir: distPath + '/' + fontsDir,
-          environment: 'production',
-          force: true
+          open: true,
+          base: [
+            '<%= config.dist %>'
+          ]
         }
       }
     },
 
-    // JSHint Task
-    jshint: {
-      options: {
-        jshintrc: '.jshintrc'
-      },
-      all: [
-        jsDir + '/{,**/}*.js',
-        '!' + jsDir + '/{,**/}*.min.js'
-      ]
-    },
-
-    // CSS Lint
-    csslint: {
-      options: {
-        csslintrc: '.csslintrc'
-      },
-      all: [
-        root + '/' + cssDir + '/{,**/}*.css'
-      ]
-    },
-
-    // Image Min Task
-    imagemin: {
-      dist: {
+    assemble: {
+      pages: {
         options: {
-          optimizationLevel: 3
+          flatten: true,
+          assets: '<%= config.dist %>/assets',
+          layout: '<%= config.src %>/templates/layouts/default.hbs',
+          data: '<%= config.src %>/data/*.{json,yml}',
+          partials: '<%= config.src %>/templates/partials/*.hbs'
         },
-        files: [{
-          expand: true,
-          cwd: imagesDir,
-          src: ['**/*.png', '**/*.jpg'],
-          dest: distPath + '/' + imagesDir
-        }]
+        files: {
+          '<%= config.dist %>/': ['<%= config.src %>/templates/pages/*.hbs']
+        }
       }
     },
 
-    // SVG Min Task
-    svgmin: {
-      dist: {
-        files: [{
-          expand: true,
-          cwd: imagesDir,
-          src: '**/*.svg',
-          dest: distPath + '/' + imagesDir
-        }]
-      }
-    },
-
-    // Uglify Task
-    uglify: {
-      dev: {
-        options: {
-          mangle: false,
-          compress: false,
-          beautify: true
-        },
-        files: [{
-          expand: true,
-          cwd: jsDir,
-          src: ['**/*.js', '!**/*.min.js'],
-          dest: root + '/' + jsDir,
-          ext: '.js'
-        }]
-      },
-      dist: {
-        options: {
-          mangle: true,
-          compress: true
-        },
-        files: [{
-          expand: true,
-          cwd: jsDir,
-          src: ['**/*.js', '!**/*.min.js'],
-          dest: distPath + '/' + jsDir,
-          ext: '.js'
-        }]
-      }
-    },
-
-    // Copy Task
     copy: {
-      dev: {
-        files: [
-          {
-            expand: true,
-            cwd: fontsDir,
-            src: ['**'],
-            dest: root + '/' + fontsDir
-          },
-          {
-            expand: true,
-            cwd: imagesDir,
-            src: ['**'],
-            dest: root + '/' + imagesDir
-          },
-          {
-            expand: true,
-            cwd: componentsDir,
-            src: ['**'],
-            dest: root + '/' + componentsDir
-          }
-        ]
+      bootstrap: {
+        expand: true,
+        cwd: 'bower_components/bootstrap/dist/',
+        src: '**',
+        dest: '<%= config.dist %>/assets/'
       },
-      dist: {
-        files: [
-          {
-            expand: true,
-            cwd: fontsDir,
-            src: ['**'],
-            dest: distPath + '/' + fontsDir
-          },
-          {
-            expand: true,
-            cwd: imagesDir,
-            src: [
-              '**',
-              '!**/*.png',
-              '!**/*.jpg',
-              '!**/*.svg'
-            ],
-            dest: distPath + '/' + imagesDir
-          }
-        ]
+      theme: {
+        expand: true,
+        cwd: 'src/assets/',
+        src: '**',
+        dest: '<%= config.dist %>/assets/css/'
       }
     },
 
-    // Parallel Task
-    parallel: {
-      assets: {
-        grunt: true,
-        tasks: ['imagemin', 'svgmin', 'uglify:dist', 'copy:dist', 'generator:dist']
-      }
-    },
-
-    // Exec Task
-    exec: {
-      launch: {
-        cmd: 'open http://localhost:' + port + '&& echo "Launched localhost:"' + port
-      },
-      commit: {
-        cmd: function(commit) {
-          return 'git add ' + distPath + ' && git commit -m "' + commit + '" ' + distPath;
-        }
-      },
-      deploy: {
-        cmd: 'git subtree push --prefix .dist ' + gh_upstream + ' ' + gh_deploy
-      },
-      export: {
-        cmd: function(path) {
-          return 'cp -r ' + distPath + ' ' + path;
-        }
-      }
-    }
+    // Before generating any new files,
+    // remove any previously-created files.
+    clean: ['<%= config.dist %>/**/*.{html,xml}']
 
   });
 
-  grunt.event.on('watch', function(action, filepath) {
-    grunt.config([
-      'copy:dev',
-      'uglify:dev',
-      'compass:dev',
-      'generator:dev',
-      'jshint',
-      'csslint'
-    ], filepath);
-  });
+  grunt.loadNpmTasks('assemble');
 
-  //////////////////////////////
-  // Grunt Task Loads
-  //////////////////////////////
-  require('matchdep').filterDev('grunt-*').forEach(grunt.loadNpmTasks);
-
-  //////////////////////////////
-  // Build Task
-  //////////////////////////////
-  grunt.registerTask('build', 'Production build', function() {
-    var commit = grunt.option('commit');
-    var deploy = grunt.option('deploy');
-
-    grunt.task.run(['parallel:assets', 'compass:dist', 'jshint']);
-
-    if (commit) {
-      if (commit === true) {
-        commit = gh_commit;
-      }
-      grunt.task.run(['exec:commit:' + commit]);
-    }
-
-    
-    if (deploy) {
-      grunt.task.run(['exec:deploy']);
-    }
-    
-  });
-
-  
-  //////////////////////////////
-  // Deploy Task
-  //////////////////////////////
-  grunt.registerTask('deploy', [
-    'exec:deploy'
+  grunt.registerTask('server', [
+    'build',
+    'connect:livereload',
+    'watch'
   ]);
 
-  //////////////////////////////
-  // Export Tasks
-  //////////////////////////////
-  grunt.registerTask('export', 'Exports your build', function() {
-    var path = grunt.option('to') || exportPath;
-
-    grunt.task.run('build', 'exec:export:' + path);
-  });
-
-  //////////////////////////////
-  // Server Tasks
-  //////////////////////////////
-  grunt.registerTask('server-init', [
-    'copy:dev',
-    'uglify:dev',
-    'compass:dev',
-    'generator:dev',
-    'jshint',
-    'csslint'
+  grunt.registerTask('build', [
+    'clean',
+    'copy',
+    'assemble'
   ]);
 
-  grunt.registerTask('server', 'Starts a development server', function() {
+  grunt.registerTask('default', [
+    'build'
+  ]);
 
-    var launch = grunt.option('launch');
-
-    grunt.task.run(['server-init', 'connect']);
-
-    if (launch) {
-      grunt.task.run('exec:launch');
-    }
-
-    grunt.task.run('watch');
-
-  });
 };
